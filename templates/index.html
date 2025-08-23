@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poketar - Pokemon Avatar Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cyber-primary: #39ff14;
+            --cyber-secondary: #ff073a;
+            --cyber-accent: #00ffff;
+            --dark-bg: #0a0a0a;
+            --dark-card: #1a1a1a;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .hero-section {
+            padding: 100px 0;
+            text-align: center;
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 20px var(--cyber-primary);
+            color: var(--cyber-primary);
+        }
+        
+        .feature-card {
+            background: rgba(26, 26, 26, 0.8);
+            border: 2px solid var(--cyber-accent);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(57, 255, 20, 0.3);
+        }
+        
+        .start-btn {
+            background: linear-gradient(45deg, var(--cyber-primary), var(--cyber-accent));
+            border: none;
+            color: black;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px var(--cyber-primary);
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <h1 class="display-1 glow-text mb-4">POKETAR</h1>
+            <h2 class="h3 mb-4">Pokemon Avatar Generator</h2>
+            <p class="lead mb-5">Scan your face and discover your perfect Pokemon avatar match from our collection of dark and mysterious creatures.</p>
+            
+            <a href="/scanner" class="start-btn">
+                <i class="bi bi-camera-fill me-2"></i>
+                Start Face Scan
+            </a>
+        </section>
+        
+        <!-- Features -->
+        <section class="row">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <i class="bi bi-camera-fill display-4 text-info mb-3"></i>
+                    <h4>Advanced Face Scanning</h4>
+                    <p>Our intelligent system analyzes your facial features to determine your Pokemon type and personality traits.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <i class="bi bi-stars display-4 text-warning mb-3"></i>
+                    <h4>Dark Pokemon Collection</h4>
+                    <p>Choose from 50+ unique dark-themed Pokemon avatars including Shadow Dragons, Dark Phoenixes, and Nightmare creatures.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <i class="bi bi-shuffle display-4 text-success mb-3"></i>
+                    <h4>Multiple Options</h4>
+                    <p>Don't like your first match? Our system can generate alternative avatars that suit your personality.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Preview Gallery -->
+        <section class="text-center mt-5">
+            <h3 class="glow-text mb-4">Preview Our Pokemon Collection</h3>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <img src="/static/images/avatars/Shadow_Dragon_Pokemon_78bc8b2f.png" alt="Shadow Dragon" class="img-fluid rounded" style="max-height: 200px;">
+                    <p class="mt-2">Shadow Dragon</p>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <img src="/static/images/avatars/Dark_Phoenix_Pokemon_cf1c3c52.png" alt="Dark Phoenix" class="img-fluid rounded" style="max-height: 200px;">
+                    <p class="mt-2">Dark Phoenix</p>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <img src="/static/images/avatars/Dark_Warlock_Pokemon_46b75e1d.png" alt="Dark Warlock" class="img-fluid rounded" style="max-height: 200px;">
+                    <p class="mt-2">Dark Warlock</p>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <img src="/static/images/avatars/Grim_Reaper_Pokemon_7322591b.png" alt="Grim Reaper" class="img-fluid rounded" style="max-height: 200px;">
+                    <p class="mt-2">Grim Reaper</p>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

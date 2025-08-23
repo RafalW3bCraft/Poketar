@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poketar - Face Scanner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cyber-primary: #39ff14;
+            --cyber-secondary: #ff073a;
+            --cyber-accent: #00ffff;
+            --dark-bg: #0a0a0a;
+            --dark-card: #1a1a1a;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .scanner-container {
+            background: rgba(26, 26, 26, 0.9);
+            border: 2px solid var(--cyber-accent);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+        
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border: 3px solid var(--cyber-primary);
+            border-radius: 15px;
+            overflow: hidden;
+            background: var(--dark-bg);
+        }
+        
+        #video-feed {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .scanning-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(transparent 45%, var(--cyber-primary) 49%, var(--cyber-primary) 51%, transparent 55%);
+            animation: scanLine 2s linear infinite;
+            pointer-events: none;
+            opacity: 0;
+        }
+        
+        .scanning-overlay.active {
+            opacity: 1;
+        }
+        
+        @keyframes scanLine {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(400px); }
+        }
+        
+        .scan-button {
+            background: linear-gradient(45deg, var(--cyber-secondary), #ff6600);
+            border: none;
+            color: white;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(255, 7, 58, 0.4);
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+        }
+        
+        .scan-button:hover {
+            background: linear-gradient(45deg, var(--cyber-primary), var(--cyber-accent));
+            box-shadow: 0 6px 25px rgba(57, 255, 20, 0.5);
+            transform: translateY(-3px);
+        }
+        
+        .scan-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .permission-prompt {
+            background: rgba(255, 170, 0, 0.1);
+            border: 2px solid #ffaa00;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            color: #ffaa00;
+            margin: 20px 0;
+        }
+        
+        .generated-avatar {
+            border: 3px solid var(--cyber-accent);
+            border-radius: 15px;
+            padding: 30px;
+            background: linear-gradient(145deg, rgba(16, 21, 46, 0.9), rgba(26, 26, 46, 0.7));
+            text-align: center;
+            margin-top: 30px;
+            animation: avatarReveal 0.8s ease-out;
+        }
+        
+        @keyframes avatarReveal {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        .avatar-image {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(57, 255, 20, 0.4);
+        }
+        
+        .analysis-panel {
+            background: rgba(26, 26, 46, 0.8);
+            border: 1px solid var(--cyber-accent);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background: rgba(57, 255, 20, 0.1);
+            border: 1px solid var(--cyber-primary);
+            color: var(--cyber-primary);
+        }
+        
+        .status-error {
+            background: rgba(255, 7, 58, 0.1);
+            border: 1px solid var(--cyber-secondary);
+            color: var(--cyber-secondary);
+        }
+        
+        .status-info {
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid var(--cyber-accent);
+            color: var(--cyber-accent);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .trait-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            margin: 3px;
+            background: linear-gradient(45deg, var(--cyber-primary), var(--cyber-accent));
+            color: var(--dark-bg);
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 20px var(--cyber-primary);
+            color: var(--cyber-primary);
+        }
+        
+        .iterate-btn {
+            background: linear-gradient(45deg, var(--cyber-accent), var(--cyber-primary));
+            border: none;
+            color: var(--dark-bg);
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .iterate-btn:hover {
+            background: linear-gradient(45deg, var(--cyber-primary), var(--cyber-accent));
+            box-shadow: 0 4px 15px rgba(57, 255, 20, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <div class="text-center mt-4">
+                    <h1 class="glow-text mb-3">
+                        <i class="bi bi-camera-fill"></i> Poketar Face Scanner
+                    </h1>
+                    <p class="text-muted mb-4">
+                        Position your face in the camera and generate your unique Pokemon avatar from our dark collection!
+                    </p>
+                </div>
+
+                <!-- Scanner Panel -->
+                <div class="scanner-container">
+                    <!-- Camera Feed -->
+                    <div class="camera-container" id="camera-container">
+                        <video id="video-feed" autoplay muted></video>
+                        <div class="scanning-overlay" id="scanning-overlay"></div>
+                    </div>
+
+                    <!-- Permission Prompt -->
+                    <div id="permission-prompt" class="permission-prompt hidden">
+                        <h4><i class="bi bi-exclamation-triangle"></i> Camera Permission Required</h4>
+                        <p>Please allow camera access to scan your face for avatar generation.</p>
+                        <button onclick="startCamera()" class="scan-button">
+                            <i class="bi bi-camera"></i> Enable Camera
+                        </button>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="text-center mt-4">
+                        <button id="scan-btn" class="scan-button" onclick="scanFace()" disabled>
+                            <i class="bi bi-lightning-charge"></i> Generate Avatar
+                        </button>
+                    </div>
+
+                    <!-- Status Messages -->
+                    <div id="status-container"></div>
+                </div>
+
+                <!-- Analysis Results -->
+                <div id="analysis-panel" class="analysis-panel hidden">
+                    <h4 class="text-info mb-3">
+                        <i class="bi bi-search"></i> Facial Analysis Results
+                    </h4>
+                    <div id="analysis-content"></div>
+                </div>
+
+                <!-- Generated Avatar -->
+                <div id="avatar-panel" class="generated-avatar hidden">
+                    <h4 class="text-info mb-3">
+                        <i class="bi bi-stars"></i> Your Pokemon Avatar
+                    </h4>
+                    <div id="avatar-content"></div>
+                </div>
+
+                <!-- Back to Home -->
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-outline-light">
+                        <i class="bi bi-house"></i> Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let video = null;
+        let stream = null;
+        let currentAnalysis = null;
+
+        // Initialize camera on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            startCamera();
+        });
+
+        async function startCamera() {
+            try {
+                showStatus('Requesting camera access...', 'info');
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    } 
+                });
+                
+                video = document.getElementById('video-feed');
+                video.srcObject = stream;
+                
+                document.getElementById('permission-prompt').classList.add('hidden');
+                document.getElementById('scan-btn').disabled = false;
+                
+                showStatus('Camera ready! Position your face in the frame and click Generate Avatar.', 'success');
+                
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                document.getElementById('permission-prompt').classList.remove('hidden');
+                
+                let errorMessage = 'Camera access denied. ';
+                if (error.name === 'NotAllowedError') {
+                    errorMessage += 'Please click "Allow" when prompted for camera access.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage += 'No camera found. You can still try the demo by clicking Generate Avatar.';
+                } else {
+                    errorMessage += 'Using demo mode - click Generate Avatar for a sample result.';
+                }
+                
+                showStatus(errorMessage, 'error');
+                
+                // Enable button for demo mode
+                document.getElementById('scan-btn').disabled = false;
+            }
+        }
+
+        async function scanFace() {
+            try {
+                const scanBtn = document.getElementById('scan-btn');
+                scanBtn.disabled = true;
+                scanBtn.innerHTML = '<div class="loading-spinner"></div> Scanning...';
+                
+                document.getElementById('scanning-overlay').classList.add('active');
+                showStatus('Analyzing your face...', 'info');
+
+                let imageData = null;
+                
+                if (video && video.srcObject && video.videoWidth > 0 && video.videoHeight > 0) {
+                    // Capture frame from video
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(video, 0, 0);
+                    imageData = canvas.toDataURL('image/jpeg', 0.8);
+                    
+                    // Clean up canvas memory
+                    canvas.width = 0;
+                    canvas.height = 0;
+                } else {
+                    // Demo mode - use a placeholder
+                    imageData = 'demo_mode';
+                }
+                
+                // Send to server for analysis
+                const response = await fetch('/scan_face', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ image: imageData })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentAnalysis = result.analysis;
+                    displayAnalysis(result.analysis);
+                    displayAvatar(result.avatar_result);
+                    showStatus('Avatar generated successfully!', 'success');
+                } else {
+                    showStatus(`Error: ${result.error}`, 'error');
+                }
+
+            } catch (error) {
+                console.error('Error during face scan:', error);
+                showStatus('Failed to analyze face. Please try again.', 'error');
+            } finally {
+                const scanBtn = document.getElementById('scan-btn');
+                scanBtn.disabled = false;
+                scanBtn.innerHTML = '<i class="bi bi-lightning-charge"></i> Generate Avatar';
+                document.getElementById('scanning-overlay').classList.remove('active');
+            }
+        }
+
+        function displayAnalysis(analysis) {
+            const panel = document.getElementById('analysis-panel');
+            const content = document.getElementById('analysis-content');
+            
+            let html = '<div class="row">';
+            
+            Object.entries(analysis).forEach(([key, value]) => {
+                const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const escapedValue = String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                html += `
+                    <div class="col-md-6 mb-2">
+                        <strong>${label}:</strong><br>
+                        <span class="trait-badge">${escapedValue}</span>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            content.innerHTML = html;
+            panel.classList.remove('hidden');
+        }
+
+        function displayAvatar(avatarData) {
+            const panel = document.getElementById('avatar-panel');
+            const content = document.getElementById('avatar-content');
+            
+            // Escape HTML to prevent XSS
+            const escapedName = String(avatarData.avatar_name || 'Unknown Pokemon').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const escapedDescription = String(avatarData.description || 'A mysterious Pokemon').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const escapedImagePath = String(avatarData.image_path || '').replace(/"/g, '&quot;');
+            
+            content.innerHTML = `
+                <div class="text-center">
+                    <div class="avatar-container" style="margin: 20px 0;">
+                        <img src="${escapedImagePath}" alt="${escapedName}" class="avatar-image" onerror="this.src='/static/images/avatars/Dark_Warlock_Pokemon_46b75e1d.png'">
+                    </div>
+                    <h5 class="text-info mb-3">${escapedName}</h5>
+                    <p class="text-muted mb-3">${escapedDescription}</p>
+                    <div class="avatar-stats" style="display: flex; justify-content: center; gap: 20px; margin: 20px 0;">
+                        <div class="stat-component">
+                            <div class="text-success fw-bold">${avatarData.compatibility_score || 0}%</div>
+                            <small class="text-muted">Compatibility</small>
+                        </div>
+                        <div class="stat-component">
+                            <div class="text-warning fw-bold">${avatarData.suggested_type || 'Dark'}</div>
+                            <small class="text-muted">Type</small>
+                        </div>
+                        <div class="stat-component">
+                            <div class="text-info fw-bold">${avatarData.iteration || 1}/${avatarData.max_iterations || 3}</div>
+                            <small class="text-muted">Version</small>
+                        </div>
+                    </div>
+                    ${avatarData.alternative_available ? '<button class="iterate-btn" onclick="iterateAvatar()"><i class="bi bi-arrow-clockwise"></i> Try Different Avatar</button>' : ''}
+                    <p class="text-muted mt-3">Your unique Pokémon avatar has been generated based on your analysis!</p>
+                </div>
+            `;
+            
+            // Store current avatar data for iteration
+            window.currentAvatarData = avatarData;
+            
+            panel.classList.remove('hidden');
+        }
+
+        async function iterateAvatar() {
+            if (!currentAnalysis || !window.currentAvatarData) return;
+            
+            try {
+                showStatus('Generating alternative avatar...', 'info');
+                
+                const currentIteration = window.currentAvatarData.iteration || 1;
+                const maxIterations = window.currentAvatarData.max_iterations || 3;
+                
+                if (currentIteration >= maxIterations) {
+                    showStatus('No more alternatives available.', 'info');
+                    return;
+                }
+                
+                const response = await fetch('/iterate_avatar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        analysis: currentAnalysis,
+                        iteration: currentIteration,
+                        max_iterations: maxIterations
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayAvatar(result.avatar_result);
+                    showStatus('Alternative avatar generated!', 'success');
+                } else {
+                    showStatus(`Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error during avatar iteration:', error);
+                showStatus('Failed to generate alternative avatar. Please try again.', 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const container = document.getElementById('status-container');
+            container.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
