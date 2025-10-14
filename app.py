@@ -3,11 +3,11 @@ import logging
 import base64
 import random
 import hashlib
+import time
 from flask import Flask, render_template, request, jsonify, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 
 class Base(DeclarativeBase):
@@ -15,22 +15,18 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 
-# Create the app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 
-# Configure the database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///avatars.db")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
 }
 
-# Initialize the app with the extension
 db.init_app(app)
 
 def get_avatar_database():
-    """Get all available avatar images from static directory"""
     avatar_db = {}
     assets_dir = "static/images/avatars"
     
@@ -38,7 +34,6 @@ def get_avatar_database():
         logging.warning("Static avatars directory not found")
         return {}
     
-    # Categorize avatars by type and personality
     type_categories = {
         'dark': ['Shadow', 'Dark', 'Nightmare', 'Evil', 'Demon', 'Cursed'],
         'ghost': ['Banshee', 'Wraith', 'Poltergeist', 'Lich'],
@@ -57,28 +52,23 @@ def get_avatar_database():
         'wild': ['Wendigo', 'Chupacabra', 'Minotaur', 'Chimera']
     }
     
-    # Scan assets directory
     for filename in os.listdir(assets_dir):
         if filename.endswith('.png'):
-            # Extract name without extension and ID
             name_parts = filename.replace('.png', '').split('_')
-            name = ' '.join(name_parts[:-1])  # Remove the ID part
+            name = ' '.join(name_parts[:-1])
             
-            # Determine type
-            pokemon_type = 'dark'  # Default
+            pokemon_type = 'dark'
             for ptype, keywords in type_categories.items():
                 if any(keyword in filename for keyword in keywords):
                     pokemon_type = ptype
                     break
             
-            # Determine personality
-            personality = 'mysterious'  # Default
+            personality = 'mysterious'
             for trait, keywords in personality_traits.items():
                 if any(keyword in filename for keyword in keywords):
                     personality = trait
                     break
             
-            # Store in database structure
             if pokemon_type not in avatar_db:
                 avatar_db[pokemon_type] = {}
             if personality not in avatar_db[pokemon_type]:
@@ -98,29 +88,24 @@ def get_avatar_database():
     return avatar_db
 
 def analyze_face_features(base64_image):
-    """Analyze face features from base64 image data"""
     try:
-        # Create consistent analysis based on image content
         image_signature = hashlib.md5(base64_image[:100].encode()).hexdigest()
-        seed_value = int(image_signature[:8], 16) % 10000
+        timestamp_seed = int(time.time() * 1000000) % 1000000
+        seed_value = (int(image_signature[:8], 16) + timestamp_seed) % 1000000
         random.seed(seed_value)
         
-        # Face shape analysis
         face_shapes = ["oval", "round", "angular", "elongated", "heart"]
         face_shape = random.choices(face_shapes, weights=[30, 25, 20, 15, 10])[0]
         
-        # Personality analysis
         personalities = [
             "fierce and determined", "mysterious and enigmatic", "graceful and elegant", 
             "wild and untamed", "wise and ancient", "playful and mischievous"
         ]
         personality = random.choice(personalities)
         
-        # Pokemon type prediction
         pokemon_types = ["dark", "ghost", "psychic", "fire", "water", "normal", "fighting", "poison"]
         pokemon_type = random.choices(pokemon_types, weights=[25, 20, 15, 10, 10, 8, 8, 4])[0]
         
-        # Energy level
         energy_levels = ["high", "medium", "low"]
         energy_level = random.choices(energy_levels, weights=[30, 50, 20])[0]
         
@@ -150,33 +135,27 @@ def analyze_face_features(base64_image):
         }
 
 def calculate_compatibility_score(avatar_info, analysis):
-    """Calculate how well an avatar matches the analysis"""
-    score = 50  # Base score
+    score = 50
     
-    # Type matching
     if avatar_info['type'] == analysis.get('suggested_pokemon_type'):
         score += 30
     
-    # Personality matching
     personality = analysis.get('personality_traits', '').lower()
     if avatar_info['personality'] in personality:
         score += 25
     
-    # Energy level influence
     energy = analysis.get('energy_level', 'medium')
     if energy == 'high' and any(word in avatar_info['name'].lower() for word in ['dragon', 'berserker', 'demon']):
         score += 15
     elif energy == 'low' and any(word in avatar_info['name'].lower() for word in ['wraith', 'ghost']):
         score += 15
     
-    # Compatibility score from analysis
     base_compatibility = analysis.get('compatibility_score', 85)
     score += base_compatibility * 0.1
     
     return min(100, score)
 
 def generate_avatar_from_analysis(analysis, iteration=1, max_iterations=3):
-    """Generate avatar using intelligent selection from assets"""
     try:
         avatar_db = get_avatar_database()
         if not avatar_db:
@@ -185,20 +164,16 @@ def generate_avatar_from_analysis(analysis, iteration=1, max_iterations=3):
         pokemon_type = analysis.get('suggested_pokemon_type', 'dark')
         personality = analysis.get('personality_traits', 'mysterious').lower()
         
-        # Get candidate avatars
         candidates = []
         
-        # Primary type matching
         if pokemon_type in avatar_db:
             for personality_key, avatars in avatar_db[pokemon_type].items():
                 if personality_key in personality:
                     candidates.extend(avatars)
-            # If no personality match, add all from type
             if not candidates:
                 for avatars in avatar_db[pokemon_type].values():
                     candidates.extend(avatars)
         
-        # Secondary matching for similar types
         if not candidates:
             related_types = {
                 'dark': ['ghost', 'psychic'],
@@ -215,7 +190,6 @@ def generate_avatar_from_analysis(analysis, iteration=1, max_iterations=3):
                     for avatars in avatar_db[related_type].values():
                         candidates.extend(avatars[:2])
         
-        # Fallback to all avatars
         if not candidates:
             for type_data in avatar_db.values():
                 for avatars in type_data.values():
@@ -224,16 +198,13 @@ def generate_avatar_from_analysis(analysis, iteration=1, max_iterations=3):
         if not candidates:
             return create_fallback_avatar()
         
-        # Calculate compatibility scores and select best match
         scored_avatars = []
         for avatar in candidates:
             score = calculate_compatibility_score(avatar, analysis)
             scored_avatars.append((avatar, score))
         
-        # Sort by score and select based on iteration
         scored_avatars.sort(key=lambda x: x[1], reverse=True)
         
-        # Select avatar based on iteration (to provide variety)
         selection_index = min(iteration - 1, len(scored_avatars) - 1)
         selected_avatar, compatibility = scored_avatars[selection_index]
         
@@ -256,7 +227,6 @@ def generate_avatar_from_analysis(analysis, iteration=1, max_iterations=3):
         return create_fallback_avatar()
 
 def create_fallback_avatar():
-    """Create a fallback avatar when generation fails"""
     return {
         'image_path': '/static/images/avatars/Dark_Warlock_Pokemon_46b75e1d.png',
         'avatar_name': 'Dark Warlock',
@@ -269,7 +239,6 @@ def create_fallback_avatar():
         'error': True
     }
 
-# Routes
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -280,7 +249,6 @@ def scanner():
 
 @app.route('/scan_face', methods=['POST'])
 def scan_face():
-    """Generate Pokémon avatar from face scan"""
     try:
         data = request.get_json()
         image_data = data.get('image')
@@ -288,9 +256,7 @@ def scan_face():
         if not image_data:
             return jsonify({'error': 'No image data provided'}), 400
         
-        # Handle demo mode
         if image_data == 'demo_mode':
-            # Create a demo analysis for when camera isn't available
             face_analysis = {
                 "face_shape": "oval",
                 "personality_traits": "mysterious and determined",
@@ -300,14 +266,11 @@ def scan_face():
                 "generation_seed": 1000
             }
         else:
-            # Remove data URL prefix if present
             if 'base64,' in image_data:
                 image_data = image_data.split('base64,')[1]
             
-            # Analyze the face
             face_analysis = analyze_face_features(image_data)
         
-        # Generate avatar based on analysis
         avatar_result = generate_avatar_from_analysis(face_analysis)
         
         return jsonify({
@@ -322,7 +285,6 @@ def scan_face():
 
 @app.route('/iterate_avatar', methods=['POST'])
 def iterate_avatar():
-    """Generate alternative avatar by iterating through options"""
     try:
         data = request.get_json()
         analysis = data.get('analysis', {})
@@ -332,7 +294,6 @@ def iterate_avatar():
         if current_iteration > max_iterations:
             return jsonify({'error': 'Maximum iterations reached'}), 400
         
-        # Generate new avatar with iteration
         avatar_result = generate_avatar_from_analysis(analysis, current_iteration, max_iterations)
         
         return jsonify({

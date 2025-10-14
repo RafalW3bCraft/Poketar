@@ -213,7 +213,6 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8">
-                <!-- Header -->
                 <div class="text-center mt-4">
                     <h1 class="glow-text mb-3">
                         <i class="bi bi-camera-fill"></i> Poketar Face Scanner
@@ -223,15 +222,12 @@
                     </p>
                 </div>
 
-                <!-- Scanner Panel -->
                 <div class="scanner-container">
-                    <!-- Camera Feed -->
                     <div class="camera-container" id="camera-container">
                         <video id="video-feed" autoplay muted></video>
                         <div class="scanning-overlay" id="scanning-overlay"></div>
                     </div>
 
-                    <!-- Permission Prompt -->
                     <div id="permission-prompt" class="permission-prompt hidden">
                         <h4><i class="bi bi-exclamation-triangle"></i> Camera Permission Required</h4>
                         <p>Please allow camera access to scan your face for avatar generation.</p>
@@ -240,18 +236,15 @@
                         </button>
                     </div>
 
-                    <!-- Controls -->
                     <div class="text-center mt-4">
                         <button id="scan-btn" class="scan-button" onclick="scanFace()" disabled>
                             <i class="bi bi-lightning-charge"></i> Generate Avatar
                         </button>
                     </div>
 
-                    <!-- Status Messages -->
                     <div id="status-container"></div>
                 </div>
 
-                <!-- Analysis Results -->
                 <div id="analysis-panel" class="analysis-panel hidden">
                     <h4 class="text-info mb-3">
                         <i class="bi bi-search"></i> Facial Analysis Results
@@ -259,7 +252,6 @@
                     <div id="analysis-content"></div>
                 </div>
 
-                <!-- Generated Avatar -->
                 <div id="avatar-panel" class="generated-avatar hidden">
                     <h4 class="text-info mb-3">
                         <i class="bi bi-stars"></i> Your Pokemon Avatar
@@ -267,7 +259,6 @@
                     <div id="avatar-content"></div>
                 </div>
 
-                <!-- Back to Home -->
                 <div class="text-center mt-4">
                     <a href="/" class="btn btn-outline-light">
                         <i class="bi bi-house"></i> Back to Home
@@ -282,7 +273,6 @@
         let stream = null;
         let currentAnalysis = null;
 
-        // Initialize camera on page load
         document.addEventListener('DOMContentLoaded', function() {
             startCamera();
         });
@@ -322,7 +312,6 @@
                 
                 showStatus(errorMessage, 'error');
                 
-                // Enable button for demo mode
                 document.getElementById('scan-btn').disabled = false;
             }
         }
@@ -339,7 +328,6 @@
                 let imageData = null;
                 
                 if (video && video.srcObject && video.videoWidth > 0 && video.videoHeight > 0) {
-                    // Capture frame from video
                     const canvas = document.createElement('canvas');
                     canvas.width = video.videoWidth;
                     canvas.height = video.videoHeight;
@@ -347,15 +335,12 @@
                     ctx.drawImage(video, 0, 0);
                     imageData = canvas.toDataURL('image/jpeg', 0.8);
                     
-                    // Clean up canvas memory
                     canvas.width = 0;
                     canvas.height = 0;
                 } else {
-                    // Demo mode - use a placeholder
                     imageData = 'demo_mode';
                 }
                 
-                // Send to server for analysis
                 const response = await fetch('/scan_face', {
                     method: 'POST',
                     headers: {
@@ -416,7 +401,6 @@
             const panel = document.getElementById('avatar-panel');
             const content = document.getElementById('avatar-content');
             
-            // Escape HTML to prevent XSS
             const escapedName = String(avatarData.avatar_name || 'Unknown Pokemon').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             const escapedDescription = String(avatarData.description || 'A mysterious Pokemon').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             const escapedImagePath = String(avatarData.image_path || '').replace(/"/g, '&quot;');
@@ -447,7 +431,6 @@
                 </div>
             `;
             
-            // Store current avatar data for iteration
             window.currentAvatarData = avatarData;
             
             panel.classList.remove('hidden');
